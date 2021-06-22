@@ -17,10 +17,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //// Alerter ////
 const ping = require('ping');
-let axios = require('axios');
+const axios = require('axios');
+const publicIp = require('public-ip');
 
 
-let hostList = ['8.8.8.8'];
+let ip = '5.116.165.252';
+let hostList = ["8.8.8.8"]
 
 let frequency = 1000; //1 second
 
@@ -28,10 +30,21 @@ let frequency = 1000; //1 second
 // host2.forEach(function(host){
     setInterval(function() {
         let host = hostList[0]
+        let currentPublicIp = publicIp.v4().then(currentPublicIp => {
+            // console.log("IP => ", currentPublicIp);
+            if (currentPublicIp == ip) {
+                console.log("####****** VPN DIACTIVE ******####");
+                sendSmsAndEmail();
+            }
+            else {
+                console.log('-------- VPN ACTIVE --------');
+            }
+        })
+        
         ping.sys.probe(host, function(active){
-            let info = active ? 'IP ' + host + ' ---- Active ----' : '|||||||||| DISCONNECTED ||||||||||';
-            let connected = 'IP ' + host + ' ---- Active ----';
-            if (info === connected) {
+            let info = active ? 'Internet Connection Active' : '|||||||||| INTERNET DISCONNECTED ||||||||||';
+            let disconnected = '|||||||||| INTERNET DISCONNECTED ||||||||||';
+            if (info === disconnected) {
                 console.log(info);
                 // sendSmsAndEmail();
             }
@@ -41,16 +54,14 @@ let frequency = 1000; //1 second
 function sendSmsAndEmail(){
     // console.log("IN FUNCTION");
 
-
-    // module.exports.sendSmsAPI = (receiverNumber,messageContent)=>{
         let timeout;
         return Promise.race([
             new Promise((resolve, reject) => {
                 // console.log("IN PROMISE")
                 let receiverNumber = "09020723812";
-                if (receiverNumber.startsWith('0')) {
-                    receiverNumber = '98' + receiverNumber.substr(1, receiverNumber.length - 1);
-                }
+                // if (receiverNumber.startsWith('0')) {
+                //     receiverNumber = '98' + receiverNumber.substr(1, receiverNumber.length - 1);
+                // }
                 let config = {
                     method: 'post',
                     url: 'https://niksms.com/fa/publicapi/PtpSms',
@@ -71,7 +82,6 @@ function sendSmsAndEmail(){
                         console.log("SMS SENT");
                         resolve(response.data);
                     } else {
-                        // console.log("else  1");
                         reject({
                             msg: "error in sending SMS",
                             error_code: response.data.Status
@@ -79,9 +89,11 @@ function sendSmsAndEmail(){
                     }
 
                 }).catch(err => {
-                    console.log("catch")
+                    console.log("axios catch")
                     reject(err);
                 })
+            }).catch(err => {
+                console.log("promise catch")
             }),
             new Promise((resolve, reject) => {
                 timeout = setTimeout(() => reject({
@@ -90,11 +102,8 @@ function sendSmsAndEmail(){
             })
 
         ]);
-    // }
 
 }
-// });
-////        ////
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
