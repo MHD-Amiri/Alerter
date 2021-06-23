@@ -58,7 +58,7 @@ function sendSmsAndEmail(){
         return Promise.race([
             new Promise((resolve, reject) => {
                 // console.log("IN PROMISE")
-                let receiverNumber = "09020723812";
+                let receiverNumber = "09373492662";
                 // if (receiverNumber.startsWith('0')) {
                 //     receiverNumber = '98' + receiverNumber.substr(1, receiverNumber.length - 1);
                 // }
